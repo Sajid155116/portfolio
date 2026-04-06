@@ -29,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Initialize build log
-        run: : > build.log
+        run: touch build.log
 
       - name: Run lint
         run: |
