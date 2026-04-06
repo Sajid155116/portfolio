@@ -63,16 +63,67 @@ jobs:
           LOG_CONTENT="$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' trimmed.log)"
           JSON_PAYLOAD="{\"logs\":\"${LOG_CONTENT}\"}"
 
-          HTTP_CODE="$(curl -sS -o response.txt -w "%{http_code}" \
-            -X POST "https://ai-devops-assistant-ryhg.onrender.com/analyze-logs" \
+          RESPONSE="$(curl -s -X POST "https://ai-devops-assistant-ryhg.onrender.com/analyze-logs" \
             -H "Content-Type: application/json" \
             --data "${JSON_PAYLOAD}")"
 
-          if [ "${HTTP_CODE}" -lt 200 ] || [ "${HTTP_CODE}" -ge 300 ]; then
-            echo "::warning::Failed to send logs to API. HTTP ${HTTP_CODE}."
+          echo "${RESPONSE}"
+          echo "${RESPONSE}" > response.json
+
+      - name: Parse API response and export fields
+        if: failure()
+        run: |
+          SUMMARY=""
+          ROOT_CAUSE=""
+          FIX_SUGGESTION=""
+
+          if [ ! -s response.json ]; then
+            echo "::warning::response.json is missing or empty. Exporting empty response fields."
+          elif ! jq empty response.json >/dev/null 2>&1; then
+            echo "::warning::response.json is not valid JSON. Exporting empty response fields."
           else
-            echo "Logs sent to external API successfully."
+            SUMMARY="$(jq -r 'if (.summary | type) == "string" then .summary else "" end' response.json 2>/dev/null || true)"
+            ROOT_CAUSE="$(jq -r 'if (.rootCause | type) == "string" then .rootCause else "" end' response.json 2>/dev/null || true)"
+            FIX_SUGGESTION="$(jq -r 'if (.fixSuggestion | type) == "string" then .fixSuggestion else "" end' response.json 2>/dev/null || true)"
           fi
+
+          {
+            echo "SUMMARY<<EOF"
+            echo "${SUMMARY}"
+            echo "EOF"
+            echo "ROOT_CAUSE<<EOF"
+            echo "${ROOT_CAUSE}"
+            echo "EOF"
+            echo "FIX_SUGGESTION<<EOF"
+            echo "${FIX_SUGGESTION}"
+            echo "EOF"
+          } >> "${GITHUB_ENV}"
+
+      - name: Post AI analysis comment on Pull Request
+        if: failure() && github.event_name == 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          COMMENT_BODY="❌ Build Failed
+
+🧠 AI Analysis:
+- Summary: ${SUMMARY}
+
+🔍 Root Cause:
+${ROOT_CAUSE}
+
+✅ Suggested Fix:
+${FIX_SUGGESTION}"
+
+          JSON_PAYLOAD="$(jq -n --arg body "${COMMENT_BODY}" '{body: $body}')"
+
+          curl -s -X POST "https://api.github.com/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            -H "Content-Type: application/json" \
+            --data "${JSON_PAYLOAD}" > /dev/null
 
       - name: Upload CI logs
         if: always()
@@ -82,5 +133,5 @@ jobs:
           path: |
             build.log
             trimmed.log
-            response.txt
+            response.json
           if-no-files-found: warn
