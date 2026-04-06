@@ -28,35 +28,47 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare log directory
-        run: mkdir -p .ci-logs
-
-      - name: Run lint (fail-fast with structured logs)
+      - name: Run lint
         run: |
           set -o pipefail
-          echo "::group::Lint Output"
-          echo "[lint][start] $(date -u +'%Y-%m-%dT%H:%M:%SZ')" | tee .ci-logs/lint.log
-          npm run lint 2>&1 | tee -a .ci-logs/lint.log
-          LINT_EXIT=${PIPESTATUS[0]}
-          echo "[lint][end] $(date -u +'%Y-%m-%dT%H:%M:%SZ') exit_code=${LINT_EXIT}" | tee -a .ci-logs/lint.log
-          echo "::endgroup::"
-          if [ "$LINT_EXIT" -ne 0 ]; then
-            echo "::error title=Lint Failed::Lint step failed. See .ci-logs/lint.log for details."
-            exit "$LINT_EXIT"
+          npm run lint 2>&1 | tee lint.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Run build
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee build.log
+          exit ${PIPESTATUS[0]}
+
+      - name: Send CI/CD logs to external API when build fails
+        if: failure()
+        continue-on-error: true
+        run: |
+          if [ ! -f build.log ]; then
+            echo "::warning::build.log not found. Skipping API log send."
+            exit 0
           fi
 
-      - name: Run build (fail-fast with structured logs)
-        run: |
-          set -o pipefail
-          echo "::group::Build Output"
-          echo "[build][start] $(date -u +'%Y-%m-%dT%H:%M:%SZ')" | tee .ci-logs/build.log
-          npm run build 2>&1 | tee -a .ci-logs/build.log
-          BUILD_EXIT=${PIPESTATUS[0]}
-          echo "[build][end] $(date -u +'%Y-%m-%dT%H:%M:%SZ') exit_code=${BUILD_EXIT}" | tee -a .ci-logs/build.log
-          echo "::endgroup::"
-          if [ "$BUILD_EXIT" -ne 0 ]; then
-            echo "::error title=Build Failed::Build step failed. See .ci-logs/build.log for details."
-            exit "$BUILD_EXIT"
+          tail -n 150 build.log > trimmed.log
+          grep -iE "error|fail|exception" build.log >> trimmed.log || true
+
+          if [ ! -s trimmed.log ]; then
+            echo "::warning::trimmed.log is empty. Skipping API log send."
+            exit 0
+          fi
+
+          LOG_CONTENT="$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' trimmed.log)"
+          JSON_PAYLOAD="{\"logs\":\"${LOG_CONTENT}\"}"
+
+          HTTP_CODE="$(curl -sS -o response.txt -w "%{http_code}" \
+            -X POST "https://ai-devops-assistant-ryhg.onrender.com/analyze-logs" \
+            -H "Content-Type: application/json" \
+            --data "${JSON_PAYLOAD}")"
+
+          if [ "${HTTP_CODE}" -lt 200 ] || [ "${HTTP_CODE}" -ge 300 ]; then
+            echo "::warning::Failed to send logs to API. HTTP ${HTTP_CODE}."
+          else
+            echo "Logs sent to external API successfully."
           fi
 
       - name: Upload CI logs
@@ -64,5 +76,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: portfolio-ci-logs
-          path: .ci-logs/
+          path: |
+            lint.log
+            build.log
+            trimmed.log
+            response.txt
           if-no-files-found: warn
