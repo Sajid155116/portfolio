@@ -8,6 +8,7 @@ const manrope = Manrope({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "Sajid Bhati | Software Engineer",
   description:
     "Portfolio of Sajid Bhati, Software Engineer specializing in backend systems, cloud, and scalable applications",
