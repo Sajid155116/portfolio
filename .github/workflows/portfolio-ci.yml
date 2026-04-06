@@ -106,18 +106,13 @@ jobs:
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          COMMENT_BODY="❌ Build Failed
-
-🧠 AI Analysis:
-- Summary: ${SUMMARY}
-
-🔍 Root Cause:
-${ROOT_CAUSE}
-
-✅ Suggested Fix:
-${FIX_SUGGESTION}"
-
-          JSON_PAYLOAD="$(jq -n --arg body "${COMMENT_BODY}" '{body: $body}')"
+          JSON_PAYLOAD="$(jq -n \
+            --arg summary "${SUMMARY}" \
+            --arg root_cause "${ROOT_CAUSE}" \
+            --arg fix_suggestion "${FIX_SUGGESTION}" \
+            '{
+              body: "❌ Build Failed\n\n🧠 AI Analysis:\n- Summary: \($summary)\n\n🔍 Root Cause:\n\($root_cause)\n\n✅ Suggested Fix:\n\($fix_suggestion)"
+            }')"
 
           curl -s -X POST "https://api.github.com/repos/${REPO}/issues/${PR_NUMBER}/comments" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
