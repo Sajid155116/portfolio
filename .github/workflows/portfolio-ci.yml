@@ -28,16 +28,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Initialize build log
+        run: : > build.log
+
       - name: Run lint
         run: |
           set -o pipefail
-          npm run lint 2>&1 | tee lint.log
+          npm run lint 2>&1 | tee -a build.log
           exit ${PIPESTATUS[0]}
 
       - name: Run build
         run: |
           set -o pipefail
-          npm run build 2>&1 | tee build.log
+          npm run build 2>&1 | tee -a build.log
           exit ${PIPESTATUS[0]}
 
       - name: Send CI/CD logs to external API when build fails
@@ -77,7 +80,6 @@ jobs:
         with:
           name: portfolio-ci-logs
           path: |
-            lint.log
             build.log
             trimmed.log
             response.txt
