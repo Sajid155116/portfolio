@@ -8,6 +8,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   build-and-lint:
     runs-on: ubuntu-latest
@@ -114,11 +118,11 @@ jobs:
               body: "❌ Build Failed\n\n🧠 AI Analysis:\n- Summary: \($summary)\n\n🔍 Root Cause:\n\($root_cause)\n\n✅ Suggested Fix:\n\($fix_suggestion)"
             }')"
 
-          curl -s -X POST "https://api.github.com/repos/${REPO}/issues/${PR_NUMBER}/comments" \
+          curl -v -X POST "https://api.github.com/repos/${REPO}/issues/${PR_NUMBER}/comments" \
             -H "Authorization: Bearer ${GITHUB_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
             -H "Content-Type: application/json" \
-            --data "${JSON_PAYLOAD}" > /dev/null
+            --data "${JSON_PAYLOAD}"
 
       - name: Upload CI logs
         if: always()
