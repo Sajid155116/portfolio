@@ -65,7 +65,7 @@ jobs:
           fi
 
           LOG_CONTENT="$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' trimmed.log)"
-          JSON_PAYLOAD="{\"logs\":\"${LOG_CONTENT}\"}"
+          JSON_PAYLOAD="{\"projectName\":\"portfolio\",\"logs\":\"${LOG_CONTENT}\",\"status\":\"failed\"}"
 
           RESPONSE="$(curl -s -X POST "https://ai-devops-assistant-ryhg.onrender.com/analyze-logs" \
             -H "Content-Type: application/json" \
@@ -73,6 +73,31 @@ jobs:
 
           echo "${RESPONSE}"
           echo "${RESPONSE}" > response.json
+
+      - name: Send CI/CD logs to external API when build succeeds
+        if: success()
+        continue-on-error: true
+        run: |
+          if [ ! -f build.log ]; then
+            echo "::warning::build.log not found. Skipping API log send."
+            exit 0
+          fi
+
+          tail -n 100 build.log > success.log
+
+          if [ ! -s success.log ]; then
+            echo "::warning::success.log is empty. Skipping API log send."
+            exit 0
+          fi
+
+          LOG_CONTENT="$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' success.log)"
+          JSON_PAYLOAD="{\"projectName\":\"portfolio\",\"logs\":\"${LOG_CONTENT}\",\"status\":\"success\"}"
+
+          RESPONSE="$(curl -s -X POST "https://ai-devops-assistant-ryhg.onrender.com/analyze-logs" \
+            -H "Content-Type: application/json" \
+            --data "${JSON_PAYLOAD}")"
+
+          echo "${RESPONSE}"
 
       - name: Parse API response and export fields
         if: failure()
