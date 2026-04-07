@@ -90,8 +90,7 @@ jobs:
             exit 0
           fi
 
-          LOG_CONTENT="$(sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e ':a;N;$!ba;s/\n/\\n/g' success.log)"
-          JSON_PAYLOAD="{\"projectName\":\"portfolio\",\"logs\":\"${LOG_CONTENT}\",\"status\":\"success\"}"
+          JSON_PAYLOAD="$(jq -Rs --arg projectName "portfolio" --arg status "success" '{projectName: $projectName, logs: ., status: $status}' < success.log)"
 
           RESPONSE="$(curl -s -X POST "https://ai-devops-assistant-ryhg.onrender.com/analyze-logs" \
             -H "Content-Type: application/json" \
