@@ -4,6 +4,7 @@ import CustomCursor from "@/components/CustomCursor";
 import EasterEggs from "@/components/EasterEggs";
 import Footer from "@/components/Footer";
 import Hero from "@/components/Hero";
+import Navbar from "@/components/Navbar";
 import { motion } from "framer-motion";
 import dynamic from "next/dynamic";
 import { useState } from "react";
@@ -34,6 +35,7 @@ export default function Home() {
     <div>
       <CustomCursor />
       <EasterEggs />
+      <Navbar />
       <motion.main
         className="mx-auto w-full max-w-6xl px-6 pb-12 pt-4 sm:px-10 sm:pt-8"
         initial={{ opacity: 0, y: 16 }}
