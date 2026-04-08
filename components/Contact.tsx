@@ -1,3 +1,7 @@
+"use client";
+
+import AnimatedSection from "@/components/AnimatedSection";
+import { motion } from "framer-motion";
 import { Link2, Mail, MapPin, MessageSquare } from "lucide-react";
 
 type ContactProps = {
@@ -14,12 +18,12 @@ const defaultLinks = [
 
 export default function Contact({
   heading = "Contact",
-  email = "sajidbhati15511@example.com",
+  email = "sajidbhati15511@gmail.com",
   location = "India",
   links = defaultLinks,
 }: ContactProps) {
   return (
-    <section id="contact" className="section-shell fade-up">
+    <AnimatedSection id="contact" className="section-shell" delay={0.1}>
       <h2 className="section-title text-neutral-900 dark:text-neutral-100">
         <MessageSquare size={20} className="text-neutral-500 dark:text-neutral-400" />
         {heading}
@@ -42,19 +46,20 @@ export default function Contact({
         <ul className="mt-4 flex flex-wrap gap-4">
           {links.map((link) => (
             <li key={link.label}>
-              <a
+              <motion.a
                 href={link.href}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 text-sm font-medium text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+                className="interactive-cursor inline-flex items-center gap-2 text-sm font-medium text-neutral-900 underline underline-offset-4 dark:text-neutral-100"
+                whileHover={{ y: -2 }}
               >
                 <Link2 size={16} />
                 {link.label}
-              </a>
+              </motion.a>
             </li>
           ))}
         </ul>
       </div>
-    </section>
+    </AnimatedSection>
   );
 }

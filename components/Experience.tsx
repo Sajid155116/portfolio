@@ -1,3 +1,7 @@
+"use client";
+
+import AnimatedSection from "@/components/AnimatedSection";
+import { motion } from "framer-motion";
 import { BriefcaseBusiness } from "lucide-react";
 
 type ExperienceItem = {
@@ -33,14 +37,19 @@ export default function Experience({
   items = defaultItems,
 }: ExperienceProps) {
   return (
-    <section id="experience" className="section-shell fade-up">
+    <AnimatedSection id="experience" className="section-shell" delay={0.1}>
       <h2 className="section-title text-neutral-900 dark:text-neutral-100">
         <BriefcaseBusiness size={20} className="text-neutral-500 dark:text-neutral-400" />
         {heading}
       </h2>
       <div className="mt-6 grid gap-4">
         {items.map((item) => (
-          <article key={`${item.company}-${item.period}`} className="surface-card hover-lift sm:p-7">
+          <motion.article
+            key={`${item.company}-${item.period}`}
+            className="surface-card hover-lift sm:p-7"
+            whileHover={{ y: -4 }}
+            transition={{ type: "spring", stiffness: 220, damping: 18 }}
+          >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{item.role}</h3>
               <p className="text-sm text-neutral-500 dark:text-neutral-400">{item.period}</p>
@@ -54,9 +63,9 @@ export default function Experience({
                 </li>
               ))}
             </ul>
-          </article>
+          </motion.article>
         ))}
       </div>
-    </section>
+    </AnimatedSection>
   );
 }

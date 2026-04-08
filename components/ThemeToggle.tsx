@@ -1,6 +1,7 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 
 const THEME_KEY = "theme-preference";
@@ -50,25 +51,28 @@ export default function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <button
+      <motion.button
         type="button"
-        className="rounded-lg border border-neutral-300 bg-white p-2.5 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
+        className="interactive-cursor rounded-lg border border-neutral-300 bg-white p-2.5 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200"
         aria-label="Toggle theme"
+        whileTap={{ scale: 0.95 }}
       >
         <Sun size={16} />
-      </button>
+      </motion.button>
     );
   }
 
   return (
-    <button
+    <motion.button
       type="button"
       onClick={toggleTheme}
-      className="rounded-lg border border-neutral-300 bg-white p-2.5 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
+      className="interactive-cursor rounded-lg border border-neutral-300 bg-white p-2.5 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800"
       aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
       title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      whileTap={{ scale: 0.95 }}
+      whileHover={{ y: -1 }}
     >
       {isDark ? <Sun size={16} /> : <Moon size={16} />}
-    </button>
+    </motion.button>
   );
 }

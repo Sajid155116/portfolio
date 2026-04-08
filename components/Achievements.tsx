@@ -1,3 +1,7 @@
+"use client";
+
+import AnimatedSection from "@/components/AnimatedSection";
+import { motion } from "framer-motion";
 import { Trophy } from "lucide-react";
 
 type AchievementItem = {
@@ -30,19 +34,24 @@ export default function Achievements({
   items = defaultItems,
 }: AchievementsProps) {
   return (
-    <section id="achievements" className="section-shell fade-up">
+    <AnimatedSection id="achievements" className="section-shell" delay={0.1}>
       <h2 className="section-title text-neutral-900 dark:text-neutral-100">
         <Trophy size={20} className="text-neutral-500 dark:text-neutral-400" />
         {heading}
       </h2>
       <ul className="mt-6 grid gap-4 md:grid-cols-3">
         {items.map((item) => (
-          <li key={item.title} className="surface-card hover-lift">
+          <motion.li
+            key={item.title}
+            className="surface-card hover-lift"
+            whileHover={{ y: -4 }}
+            transition={{ type: "spring", stiffness: 220, damping: 18 }}
+          >
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">{item.title}</h3>
             <p className="mt-2 text-neutral-700 dark:text-neutral-300">{item.detail}</p>
-          </li>
+          </motion.li>
         ))}
       </ul>
-    </section>
+    </AnimatedSection>
   );
 }
